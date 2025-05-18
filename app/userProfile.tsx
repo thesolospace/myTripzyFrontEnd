@@ -36,10 +36,10 @@ export default function ProfileScreen() {
   useEffect(() => {
     fadeAnim.value = withTiming(1, { duration: 1200, easing: Easing.out(Easing.quad) });
     badgeAnim.forEach((anim, index) => {
-      anim.value = withTiming(1, { duration: 800, delay: index * 200, easing: Easing.out(Easing.cubic) });
+      anim.value = withTiming(1, { duration: 800,  easing: Easing.out(Easing.cubic) });
     });
     tripAnim.forEach((anim, index) => {
-      anim.value = withTiming(1, { duration: 800, delay: index * 200, easing: Easing.out(Easing.cubic) });
+      anim.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.cubic) });
     });
   }, []);
 
@@ -55,7 +55,7 @@ export default function ProfileScreen() {
   const animatedTripStyle = (index:any) =>
     useAnimatedStyle(() => ({
       opacity: tripAnim[index].value,
-      transform: [{ translateX: withTiming(0, { duration: 800, delay: index * 200 }) }],
+      transform: [{ translateX: withTiming(0, { duration: 800}) }],
     }));
 
   const handleSettingAction = (action:any) => {

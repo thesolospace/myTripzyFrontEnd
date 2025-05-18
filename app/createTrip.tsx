@@ -13,6 +13,13 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
+import { useNavigation } from "expo-router";
+import { useAppDispatch } from "hooks/hooks";
+import apiClient from "api";
+import { showToast } from "components/coreComponets/ToastMessage";
+import { setSelectedTrip } from "store/slices/homeScreenSlice";
+
+
 const { width } = Dimensions.get("window");
 
 // Sample location data (replace with your actual data source)
@@ -45,14 +52,15 @@ export default function CreateTripScreen() {
   const [showReturnDate, setShowReturnDate] = useState(false);
   const [showTravelFromDropdown, setShowTravelFromDropdown] = useState(false);
   const [showActivityDropdown, setShowActivityDropdown] = useState({});
-
+  const [loading, setLoading] = useState(false);
   const transportOptions = [
     { name: "bike", icon: "bicycle" },
     { name: "train", icon: "train" },
     { name: "car", icon: "car" },
     { name: "bus", icon: "bus" },
   ];
-
+  const navigation = useNavigation();
+  const dispatch = useAppDispatch();
   const handleInputChange = (field, value) => {
     setTripData({ ...tripData, [field]: value });
   };
@@ -130,10 +138,7 @@ export default function CreateTripScreen() {
     });
   };
 
-  const handleSubmit = () => {
-    console.log("Trip Data:", tripData);
-    // Add API call or navigation logic here
-  };
+
 
   const formatDate = (date) => {
     return date.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
@@ -145,6 +150,50 @@ export default function CreateTripScreen() {
       [`${dayIndex}-${actIndex}`]: !prev[`${dayIndex}-${actIndex}`],
     }));
   };
+
+
+
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      // Prepare payload, converting numeric fields
+      const payload = {
+        title: tripData.title,
+        description: tripData.description,
+        startDate: tripData.startDate.toISOString().split("T")[0],
+        startTime: tripData.startTime,
+        returnDate: tripData.returnDate.toISOString().split("T")[0],
+        returnTime: tripData.returnTime,
+        travelType: tripData.travelType,
+        travelFrom: tripData.travelFrom,
+        destinations: tripData.destinations,
+        itinerary: tripData.itinerary.map(day => ({
+          date: day.date.toISOString().split("T")[0],
+          activities: day.activities,
+        })),
+        numberOfPeople: Number(tripData.numberOfPeople),
+        price: Number(tripData.price),
+        images: tripData.images,
+      };
+
+      const response = await apiClient.post("/trips/create", payload);
+      console.log("Trip created successfully:", response);
+      showToast("success", "Trip created successfully!");
+      // Navigate to details or list screen
+      if(response?.success===true){
+        dispatch(setSelectedTrip(response?.data));
+        navigation.push("tripDetails");
+      }
+   
+    } catch (error: any) {
+      console.error("Error creating trip:", error);
+      showToast("error", typeof error === "string" ? error : "Failed to create trip");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -436,8 +485,16 @@ export default function CreateTripScreen() {
 
       {/* Submit Button */}
       <Animated.View style={styles.footerBar} entering={FadeInUp.delay(600)}>
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>Create Trip</Text>
+        <TouchableOpacity
+          style={[styles.submitButton, loading && { opacity: 0.7 }]}
+          onPress={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.submitButtonText}>Create Trip</Text>
+          )}
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -685,13 +742,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 20,
+    padding: 16,
     backgroundColor: "#1A3C4A",
     elevation: 10,
   },
   submitButton: {
     backgroundColor: "#F57C00",
-    paddingVertical: 15,
+    paddingVertical: 12,
     borderRadius: 25,
     alignItems: "center",
   },

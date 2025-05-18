@@ -9,57 +9,40 @@ import {
   Dimensions,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { Ionicons } from '@expo/vector-icons'; // Assuming Expo vector icons is available
+import { Ionicons } from '@expo/vector-icons';
+import { useAppSelector } from "hooks/hooks";
+
+ // if you want to grab from Redux
 
 const { width } = Dimensions.get("window");
 
-export default function JourneyDetailsScreen({ route }) {
-  const trip = {
-    _id: "123456789",
-    title: "Ladakh Bike Adventure",
-    description:
-      "Embark on an epic bike journey through the rugged terrains of Ladakh, exploring monasteries and high-altitude passes.",
-    startDate: new Date("2025-03-19"),
-    startTime: "10:00 AM",
-    returnDate: new Date("2025-03-22"),
-    returnTime: "6:00 PM",
-    travelType: "bike",
-    travelFrom: "Delhi",
-    destinations: [
-      { name: "Manali", lat: 32.2396, lng: 77.1887 },
-      { name: "Leh", lat: 34.1526, lng: 77.5771 },
-    ],
-    itinerary: [
-      {
-        date: new Date("2025-03-19"),
-        activities: [
-          { title: "Ride to Manali", description: "Start journey from Delhi", location: "Manali" },
-        ],
-      },
-      {
-        date: new Date("2025-03-20"),
-        activities: [
-          { title: "Visit Hidimba Temple", description: "Explore local culture", location: "Manipur" },
-        ],
-      },
-    ],
-    numberOfPeople: 15,
-    currentParticipants: [{ userId: "user123", joinedAt: new Date() }],
-    images: [
-      "https://images.unsplash.com/photo-1623571430216-5653698d02c8",
-      "https://images.unsplash.com/photo-1524492412937-b28074a5d7da",
-      "https://images.unsplash.com/photo-1661919589683-f11880119fb7",
-    ],
-    price: 25000,
-    status: "planned",
-  };
+export default function JourneyDetailsScreen() {
+  // —— Option A: pass the full trip object when navigating ——  
+  // const { trip } = route.params;
+
+  // —— Option B: pass only tripId, then select from Redux ——  
+
+  const trip = useAppSelector((state:any) => state.homeScreen.selectedTrip);
+
+
+  // const trip = routedTrip || tripFromStore;
+
+  // safety in case data isn't ready
+  if (!trip) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading trip details…</Text>
+      </View>
+    );
+  }
 
   const handleReserveSpot = () => {
     console.log("Reserved spot for:", trip.title);
   };
 
   const formatDate = (date) => {
-    return date.toLocaleDateString("en-US", {
+    const d = new Date(date);
+    return d.toLocaleDateString("en-US", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -67,16 +50,19 @@ export default function JourneyDetailsScreen({ route }) {
   };
 
   const formatDateMonth = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    const d = new Date(dateString);
+    return d.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
     });
   };
   
   const getTripDuration = () => {
-    const diffTime = Math.abs(trip.returnDate - trip.startDate);
+    const start = new Date(trip.startDate);
+    const end = new Date(trip.returnDate);
+    const diffTime = Math.abs(end - start);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return `${diffDays} Days`;
+    return `${diffDays} Day${diffDays > 1 ? 's' : ''}`;
   };
 
   return (
@@ -87,7 +73,11 @@ export default function JourneyDetailsScreen({ route }) {
           <Text style={styles.journeyTitle}>{trip.title}</Text>
           <View style={styles.headerInfo}>
             <View style={styles.headerTag}>
-              <Ionicons name={trip.travelType === "bike" ? "bicycle" : "train"} size={16} color="#F57C00" />
+              <Ionicons
+                name={trip.travelType === "bike" ? "bicycle" : "train"}
+                size={16}
+                color="#F57C00"
+              />
               <Text style={styles.tripSpan}>{trip.travelType.toUpperCase()}</Text>
             </View>
             <Text style={styles.duration}>{getTripDuration()}</Text>
@@ -155,11 +145,11 @@ export default function JourneyDetailsScreen({ route }) {
                 <Text style={styles.dayTag}>
                   Day {index + 1} • {formatDate(day.date)}
                 </Text>
-                {day.activities.map((activity, actIndex) => (
-                  <View key={actIndex} style={styles.activityItem}>
-                    <Text style={styles.activityTitle}>{activity.title}</Text>
-                    <Text style={styles.activityDesc}>{activity.description}</Text>
-                    <Text style={styles.activityLocation}>{activity.location}</Text>
+                {day.activities.map((act, ai) => (
+                  <View key={ai} style={styles.activityItem}>
+                    <Text style={styles.activityTitle}>{act.title}</Text>
+                    <Text style={styles.activityDesc}>{act.description}</Text>
+                    <Text style={styles.activityLocation}>{act.location}</Text>
                   </View>
                 ))}
               </View>
@@ -203,6 +193,7 @@ export default function JourneyDetailsScreen({ route }) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
