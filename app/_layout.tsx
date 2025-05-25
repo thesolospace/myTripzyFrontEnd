@@ -79,6 +79,11 @@ export default function RootLayout() {
         name="createPiXGoPost"
         options={{ title: "My Profile", headerShown: true }}
        />
+        <Stack.Screen
+        name="SeacrchList"
+        options={{ title: "Search Results", headerShown: true }}
+       />
+
        <Stack.Screen name="+not-found" options={{ title: "Not Found" }} />
       </Stack>
 

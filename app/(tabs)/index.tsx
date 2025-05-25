@@ -8,12 +8,14 @@ import {
  TouchableOpacity,
  ScrollView,
  FlatList,
+ TextInput,
+ Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppDispatch, useAppSelector } from "hooks/hooks";
 import { getTripList, setSelectedTrip } from "store/slices/homeScreenSlice";
 import ToastMessage from "components/coreComponets/ToastMessage";
-
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export type Trip = {
  title: string;
@@ -60,7 +62,9 @@ export default function HomeScreen() {
  const [modalVisible1, setModalVisible1] = useState(true);
  const dispatch = useAppDispatch();
  const tripListData = useAppSelector((state) => state.homeScreen.tripList);
- console.log(tripListData, "tripListData");
+ const userData = useAppSelector((state) => state?.auth?.user);
+ const token = useAppSelector((state) => state?.auth?.token);
+ console.log("tripListData", userData, token);
  useEffect(() => {
   console.log("🔔 HomeScreen mounted – dispatching getTripList");
   if (!tripListData?.length) {
@@ -98,6 +102,12 @@ export default function HomeScreen() {
   return tripListData?.filter((trip: any) => trip?.tripType === selectedName);
  }, [selectedCategory, tripListData]);
 
+ const [departure, setDeparture] = useState("");
+ const [destination, setDestination] = useState("");
+ const [travelDate, setTravelDate] = useState("");
+ const [travelerCount, setTravelerCount] = useState("");
+ const [showDatePicker, setShowDatePicker] = useState(false);
+ const [selectedDate, setSelectedDate] = useState<Date | null>(null);
  return (
   <>
    <ScrollView style={styles.container}>
@@ -131,27 +141,119 @@ export default function HomeScreen() {
 
           </CoreModal>
         </View> */}
-    <View style={[styles.header, { ...styles.spacing }]}>
-     <Image
-      //  source={{
-      //  uri:  "https://media.licdn.com/dms/image/v2/D5603AQEYbB6JSaOtvA/profile-displayphoto-shrink_800_800/B56ZZbVfOgHgAc-/0/1745289083228?e=1752710400&v=beta&t=hk274PjbwL1SfIMXuJqtMKpjuMfhlDeBDhkIri-3jDQ"
-      // }}
-      // source={require("../../assets/images/deafultImage1.jpg")}
-      resizeMode="cover"
-      style={styles.profileImage}
+
+    {token && (
+     <View style={[styles.header, { ...styles.spacing }]}>
+      <Image
+       //  source={{
+       //  uri:  "https://media.licdn.com/dms/image/v2/D5603AQEYbB6JSaOtvA/profile-displayphoto-shrink_800_800/B56ZZbVfOgHgAc-/0/1745289083228?e=1752710400&v=beta&t=hk274PjbwL1SfIMXuJqtMKpjuMfhlDeBDhkIri-3jDQ"
+       // }}
+       // source={require("../../assets/images/deafultImage1.jpg")}
+       resizeMode="cover"
+       style={styles.profileImage}
        defaultSource={require("../../assets/images/deafultImage1.jpg")}
-     />
-     <View style={styles.textContainer}>
-      <View style={styles.welcomeText}>
-       <Text style={styles.welcome}>Welcome</Text>
-       <Text style={styles.userName}>Finney</Text>
+      />
+      <View style={styles.textContainer}>
+       <View style={styles.welcomeText}>
+        <Text style={styles.welcome}>Welcome</Text>
+        <Text style={styles.userName}>{userData?.firstName}</Text>
+       </View>
+       <Text style={styles.quote}>Travel far enough to meet yourself.</Text>
       </View>
-      <Text style={styles.quote}>Travel far enough to meet yourself.</Text>
+      <TouchableOpacity style={styles.tripsButton}>
+       <Text style={styles.tripsText}>My Trips</Text>
+      </TouchableOpacity>
      </View>
-     <TouchableOpacity style={styles.tripsButton}>
-      <Text style={styles.tripsText}>My Trips</Text>
-     </TouchableOpacity>
+    )}
+
+    {/* <View style={styles.searchBox}>
+    <SearchIcon size={20} color="#888" />
+    <TextInput
+     value={query}
+     onChangeText={setQuery}
+     onSubmitEditing={handleSearch}
+     placeholder="Search for trips, places..."
+     style={styles.input}
+     placeholderTextColor="#999"
+    />
+   </View> */}
+    {/* 
+   <View style={styles.tripCard}>
+    <Text style={styles.tripCardTitle}>Start Your Journey</Text>
+
+    <View style={styles.inputGroup}>
+     <Text style={styles.inputLabel}>Leaving from</Text>
+     <TextInput
+      style={styles.tripInput}
+      placeholder="Enter Starting city"
+      placeholderTextColor="#aaa"
+      value={departure}
+      onChangeText={setDeparture}
+     />
     </View>
+
+    <View style={styles.inputGroup}>
+     <Text style={styles.inputLabel}>Going to</Text>
+     <TextInput
+      style={styles.tripInput}
+      placeholder="Enter destination city"
+      placeholderTextColor="#aaa"
+      value={destination}
+      onChangeText={setDestination}
+     />
+    </View>
+
+    <View style={styles.rowGroup}>
+     <View style={styles.rowInput}>
+      <Text style={styles.inputLabel}>Travel Date</Text>
+      <TouchableOpacity
+       style={styles.tripInput}
+       onPress={() => setShowDatePicker(true)}
+       activeOpacity={0.8}
+      >
+       <Text style={{ color: travelDate ? '#000' : '#aaa' }}>
+        {travelDate || 'Select date'}
+       </Text>
+      </TouchableOpacity>
+
+      {showDatePicker && (
+       <DateTimePicker
+        value={selectedDate || new Date()}
+        mode="date"
+        display={Platform.OS === 'ios' ? 'inline' : 'default'}
+        onChange={(event, date) => {
+         setShowDatePicker(Platform.OS === 'ios');
+         if (date) {
+          const formatted = `${date.getDate().toString().padStart(2, '0')}/$${
+           (date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+          setTravelDate(formatted);
+          setSelectedDate(date);
+         }
+        }}
+       />
+      )}
+     </View>
+
+     <View style={styles.rowInput}>
+      <Text style={styles.inputLabel}>Travelers</Text>
+      <TextInput
+       style={styles.tripInput}
+       placeholder="e.g. 2"
+       keyboardType="number-pad"
+       placeholderTextColor="#aaa"
+       value={travelerCount}
+       onChangeText={setTravelerCount}
+      />
+     </View>
+    </View>
+
+    <TouchableOpacity style={styles.searchButton} 
+    // onPress={handleSearch}
+    >
+     <Text style={styles.searchButtonText}>Search Trips</Text>
+    </TouchableOpacity>
+   </View> */}
+
     <View style={[styles.categoryContainer]}>
      <FlatList
       data={categories}
@@ -376,7 +478,7 @@ const styles = StyleSheet.create({
   width: 80,
   height: 80,
   borderRadius: 40,
-  borderWidth:.5
+  borderWidth: 0.5,
  },
  cardImage: {
   width: "100%",
@@ -497,4 +599,60 @@ const styles = StyleSheet.create({
   fontWeight: "600",
  },
  emptyText: { textAlign: "center", marginTop: 32, color: "#999" },
+
+ tripCard: {
+  backgroundColor: "#fff",
+  borderRadius: 16,
+  padding: 20,
+  marginHorizontal: 16,
+  marginTop: 16,
+  shadowColor: "#000",
+  shadowOpacity: 0.1,
+  shadowOffset: { width: 0, height: 2 },
+  shadowRadius: 6,
+  elevation: 4,
+ },
+ tripCardTitle: {
+  fontSize: 18,
+  fontWeight: "700",
+  color: "#0D2927",
+  marginBottom: 16,
+ },
+ inputGroup: {
+  marginBottom: 14,
+ },
+ inputLabel: {
+  fontSize: 13,
+  color: "#666",
+  marginBottom: 4,
+  fontWeight: "500",
+ },
+ tripInput: {
+  backgroundColor: "#F3F4F6",
+  borderRadius: 10,
+  paddingVertical: 10,
+  paddingHorizontal: 12,
+  fontSize: 14,
+  color: "#333",
+ },
+ rowGroup: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  gap: 12,
+ },
+ rowInput: {
+  flex: 1,
+ },
+ searchButton: {
+  marginTop: 18,
+  backgroundColor: "#EF4354",
+  paddingVertical: 12,
+  borderRadius: 10,
+  alignItems: "center",
+ },
+ searchButtonText: {
+  color: "#fff",
+  fontSize: 15,
+  fontWeight: "600",
+ },
 });
